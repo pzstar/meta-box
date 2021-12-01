@@ -1,0 +1,421 @@
+/**
+ * All Types Meta Box Class CSS
+ *
+ * CSS used for the custom metaboxes and other form items.
+ *
+ * Copyright 2011 Ohad Raz (admin@bainternet.info)
+ */
+
+.ht--meta-box-desc{
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.ht--meta-box-container{
+    display: flex;
+}
+
+.ht--meta-box-tab-nav{
+    width: 230px;
+    background: #EEE;
+    margin: -6px 30px -14px -14px;
+    flex: 0 0 230px;
+}
+
+.ht--meta-box-panels{
+    flex-grow: 1;
+    padding-top: 20px;
+}
+
+.ht--meta-box-tab-nav li.ht--meta-box-tab{
+    margin: 0;
+}
+
+.ht--meta-box-tab-nav li.ht--meta-box-tab a{
+    display: block;
+    text-decoration: none;
+    color: #333;
+    padding: 15px 20px 15px 45px;
+    margin: 0;
+    box-shadow: none;
+    outline: none;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.ht--meta-box-tab-nav li.ht--meta-box-tab a i{
+    float: left;
+    font-size: inherit;
+    line-height: inherit;
+    height: auto;
+    width: auto;
+    margin-right: 6px;
+    margin-left: -25px;
+}
+
+.ht--meta-box-tab-nav li.ht--meta-box-tab.ht--active-tab a{
+    background: #FFF;
+}
+
+.ht--meta-box-panels .ht--meta-box-panel{
+    display: none;
+}
+
+.ht--meta-box-row{
+    margin-bottom: 20px;
+    display: flex;
+}
+
+.ht--meta-box-row:last-child{
+    margin-bottom: 0;
+}
+
+.ht--meta-box-panel > .ht--meta-box-row,
+.ht--meta-box-conditional-container > .ht--meta-box-row{
+    border-bottom: 1px solid #EEE;
+    padding-bottom: 20px;
+}
+
+.ht--meta-box-panel > .ht--meta-box-row:last-child,
+.ht--meta-box-conditional-container > .ht--meta-box-row:last-child{
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.ht--meta-box-label{
+    margin-bottom: 5px;
+    display: block;
+    font-weight: bold;
+    width: 140px;
+    padding-right: 30px;
+    flex: 0 0 140px;
+}
+
+.ht--meta-box-field{
+    flex-grow: 1;
+}
+
+/*Toggle*/
+.ht--meta-box-toggle {
+    position: relative;
+    width: 52px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ht--user-select: none;
+}
+
+.ht--meta-box-toggle input {
+    display: none !important;
+}
+
+.ht--meta-box-toggle-label{
+    display: block;
+    overflow: hidden;
+    cursor: pointer;
+    height: 22px;
+    padding: 0;
+    line-height: 19px !important;
+    -webkit-transition: background-color 0.2s ease-in;
+    transition: background-color 0.2s ease-in;
+    border-radius: 30px;
+    background-color: #c4c4c4;
+    -webkit-box-shadow: inset 0 2px 1px rgba(0, 0, 0, 0.11);
+    box-shadow: inset 0 2px 1px rgba(0, 0, 0, 0.11);
+}
+
+.ht--meta-box-toggle-label:before {
+    content: '';
+    display: block;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    position: absolute;
+    top: 2px;
+    bottom: 0;
+    right: 32px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    -webkit-transition: all 0.2s ease-in 0s;
+    transition: all 0.2s ease-in 0s;
+}
+
+.ht--meta-box-toggle-label:after {
+    content: 'OFF';
+    display: block;
+    color: #fff;
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    right: 6px;
+    font-size: 11px;
+    font-family: 'Arial';
+}
+
+.ht--meta-box-toggle-checkbox:checked + .ht--meta-box-toggle-label{
+    background-color: #adc75c;
+}
+
+.ht--meta-box-toggle-checkbox:checked + .ht--meta-box-toggle-label:before {
+    right: 2px;
+}
+
+.ht--meta-box-toggle-checkbox:checked + .ht--meta-box-toggle-label:after {
+    content: 'ON';
+    right: 27px;
+}
+
+/*Image Radio*/
+.ht--meta-box-image-select {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+    height: auto;
+    margin: 0 15px 15px 0;
+    padding: 3px;
+}
+
+.ht--meta-box-image-select.ht--big-thumb{
+    width: 120px;
+    height: 120px;
+}
+
+.ht--meta-box-image-select.total-full-width-thumb{
+    width: 3000px;
+    height: auto;
+    display: block;
+}
+
+.ht--meta-box-image-select span{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    border: 3px solid #d8d8d8;
+}
+
+.ht--meta-box-image-select img {
+    width: 100%;
+}
+
+.ht--meta-box-image-select:hover span{
+    border-color: #333;
+}
+
+.ht--meta-box-image-select input:checked + span{
+    border-color: #0074a2;
+}
+
+.ht--meta-box-image-select .ht--radio {
+    display: none;
+}
+
+/*Background Image*/
+.ht--meta-box-bg-params{
+    margin-bottom: 15px;
+}
+
+.ht--meta-box-image-preview img{
+    max-width: 300px;
+    margin-bottom: 15px;
+}
+
+.ht--meta-box-image-preview img{
+    display: block;
+    cursor: pointer;
+}
+
+.ht--meta-box-bg-param-color{
+    margin-bottom: 15px;
+}
+
+.ht--meta-box-bg-param-row{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.ht--meta-box-bg-param-col{
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
+.ht--meta-box-bg-param-col > label,
+.ht--meta-box-bg-param-overlay > label{
+    display: block;
+    margin-bottom: 5px;
+}
+
+.ht--meta-box-bg-param-col select{
+    width: 100%;
+}
+
+/*Radio*/
+.ht--radio-label{
+    margin-right: 20px;
+}
+
+/*Multi Checkbox*/
+.ht--meta-box-checkbox-fields{
+    margin-bottom: 8px;
+}
+
+/*Alpha Color*/
+.wp-picker-container input[type=text].wp-color-picker.ht--meta-alpha-color{
+    width: 120px !important;
+}
+
+/*Repeater*/
+.ht--repater-block{
+    position: relative;
+    border: 1px solid #eee;
+    padding: 0 12px;
+    margin-bottom: 20px;
+    background: #FFF;
+}
+
+.ht--repater-block > h6{
+    background: #EEE;
+    padding: 10px;
+    font-size: 13px;
+    margin: 0 -12px;
+    display: flex;
+    align-items: center;
+}
+
+.ht--meta-box-repeater-table{
+    margin: 20px 0;
+}
+
+.ht--repater-block > h6 .ht--re-sort-handle{
+    margin-right: 20px;
+    font-size: 16px;
+    cursor: move;
+}
+
+.ht--repater-block > h6 .ht--re-toggle{
+    margin-left: auto;
+    cursor: pointer;
+}
+
+.ht--repater-block .ht--re-remove{
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    color: #FF0000;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 9;
+}
+
+/* Conditional */
+.ht--meta-box-conditional-container{
+    margin-top: -21px;
+    border: 1px solid #EEE;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.ht--meta-box-form-table{
+    margin: 0;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ht--meta-box-form-table td{
+    vertical-align: top;
+}
+
+
+/*Dimension Control*/
+
+/* Customizer Dimension */
+ul.ht--dimension *{
+    box-sizing: border-box;
+}
+
+ul.ht--dimension {
+    display: flex;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.ht--dimension .ht--dimension-wrap {
+    float: left;
+    margin: 0;
+    padding: 0;
+}
+
+.ht--dimension .ht--dimension-wrap input,
+.ht--dimension .ht--dimension-wrap button {
+    display: block;
+    font-size: 12px;
+    padding: 4px 0;
+    width: 70px;
+    height: 28px;
+    border: 1px solid;
+    border-color: #a4afb7;
+    border-left-width: 0;
+    border-radius: 0;
+    margin: 0;
+    text-align: center;
+}
+
+.ht--dimension .ht--dimension-wrap:first-child input {
+    border-left-width: 1px;
+    border-radius: 3px 0 0 3px;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--dimension-label {
+    display: block;
+    color: #949698;
+    font-size: 10px;
+    padding-top: 5px;
+    font-style: normal;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.ht--dimension .ht--dimension-wrap input:focus + .ht--dimension-label {
+    color: #42474a;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions {
+    background-color: #fff;
+    border: 1px solid #a4afb7;
+    border-left-width: 0;
+    padding: 0;
+    outline: none;
+    border-radius: 0 3px 3px 0;
+    cursor: pointer;
+    width: 60px;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions span {
+    display: block;
+    width: 100%;
+    height: 28px;
+    line-height: 28px;
+    font-size: 16px;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions .ht--linked {
+    background-color: #a4afb7;
+    color: #fff;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions.unlinked .ht--unlinked {
+    display: none;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions.unlinked .ht--linked {
+    display: block;
+}
+
+.ht--dimension .ht--dimension-wrap .ht--link-dimensions .ht--linked {
+    display: none;
+}
