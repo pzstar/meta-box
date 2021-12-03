@@ -9,7 +9,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
      * All Types Meta Box class.
      *
      * @package All Types Meta Box
-     * @since 1.0
      *
      * @todo Nothing.
      */
@@ -79,8 +78,15 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $this->_prefix = (isset($meta_box['prefix'])) ? $meta_box['prefix'] : '';
             $this->_fields = $this->_meta_box['fields'];
             $this->add_missed_values();
-
-            $this->SelfPath = get_stylesheet_directory_uri() . '/inc/meta-box';
+            if (isset($meta_box['use_with_theme'])) {
+                if ($meta_box['use_with_theme'] === true) {
+                    $this->SelfPath = get_stylesheet_directory_uri() . '/inc/meta-box/';
+                } elseif ($meta_box['use_with_theme'] === false) {
+                    $this->SelfPath = plugins_url('meta-box-class', plugin_basename(dirname(__FILE__)));
+                } else {
+                    $this->SelfPath = $meta_box['use_with_theme'];
+                }
+            }
 
             // Add metaboxes
             add_action('add_meta_boxes', array($this, 'add'));
@@ -102,10 +108,10 @@ if (!class_exists('HashThemes_Meta_Box')) {
             global $typenow;
             if (in_array($typenow, $this->_meta_box['pages']) && $this->is_edit_page()) {
                 // Enqueue Meta Box Style
-                wp_enqueue_style('hashthemes-meta-box', $plugin_path . '/assets/meta-box.css');
+                wp_enqueue_style('hashthemes-meta-box', $plugin_path . 'assets/meta-box.css');
 
                 // Enqueue Meta Box Scripts
-                wp_enqueue_script('hashthemes-meta-box', $plugin_path . '/assets/meta-box.js', array('jquery'), null, true);
+                wp_enqueue_script('hashthemes-meta-box', $plugin_path . 'assets/meta-box.js', array('jquery'), null, true);
 
                 // Check for special fields and add needed actions for them
                 foreach (array('color', 'alpha_color', 'date', 'time', 'select') as $type) {
@@ -217,16 +223,17 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 if ($field['type'] == 'tabopen') {
                     $active_class = $active_tab ? ' ht--active-tab' : '';
                     $display_status = $active_tab ? 'style="display:block"' : '';
-                    $tab .= "<li class='ht--meta-box-tab" . $active_class . "' data-panel='{$field['id']}'><a href='#'>";
+
+                    $tab .= "<li class='ht--meta-box-tab" . esc_attr($active_class) . "' data-panel='" . esc_attr($field['id']) . "'><a href='#'>";
                     if (isset($field['icon'])) {
                         $tab .= "<i class='dashicons-admin-generic dashicons'></i>";
                     }
 
                     if (isset($field['name'])) {
-                        $tab .= $field['name'];
+                        $tab .= esc_html($field['name']);
                     }
                     $tab .= "</a></li>";
-                    $content .= '<div class="ht--meta-box-panel ' . $field['id'] . '" ' . $display_status . '>';
+                    $content .= '<div class="ht--meta-box-panel ' . esc_attr($field['id']) . '" ' . $display_status . '>';
                     $active_tab = false;
                 } elseif ($field['type'] == 'tabclose') {
                     $content .= '</div>';
@@ -235,17 +242,17 @@ if (!class_exists('HashThemes_Meta_Box')) {
                     $meta = get_post_meta($post->ID, $field['id'], !$field['multiple']);
                     $default_value = isset($field['std']) ? $field['std'] : '';
                     $meta = ( $meta !== '' ) ? $meta : $default_value;
-
+                    $meta_box_class = isset($field['label_block']) && $field['label_block'] ? ' ht--meta-box-label-block' : '';
 
                     if (!in_array($field['type'], array('image', 'repeater', 'cond'))) {
                         $meta = is_array($meta) ? array_map('esc_attr', $meta) : esc_attr($meta);
                     }
                     if (!isset($field['group']) && $this->inGroup !== true) {
-                        echo '<div class="ht--meta-box-row ht--meta-box-' . $field['type'] . '">';
+                        echo '<div class="ht--meta-box-row ht--meta-box-' . esc_attr($field['type']) . $meta_box_class . '">';
                     }
                     if (isset($field['group']) && $field['group'] == 'start') {
                         $this->inGroup = true;
-                        echo '<div class="ht--meta-box-row">';
+                        echo '<div class="ht--meta-box-row' . esc_attr($meta_box_class) . '">';
                         echo '<table class="ht--meta-box-form-table"><tr>';
                     }
 
@@ -283,12 +290,11 @@ if (!class_exists('HashThemes_Meta_Box')) {
         public function show_field_repeater($field, $meta) {
             global $post;
             // Get Plugin Path
-            $plugin_path = $this->SelfPath;
             $this->show_field_begin($field, $meta);
             $class = '';
             if ($field['sortable'])
                 $class = " ht--repeater-sortable";
-            echo "<div class='ht--repeater" . $class . "' id='{$field['id']}'>";
+            echo "<div class='ht--repeater" . esc_attr($class) . "' id='" . esc_attr($field['id']) . "'>";
 
             $c = 0;
             $meta = get_post_meta($post->ID, $field['id'], true);
@@ -323,10 +329,11 @@ if (!class_exists('HashThemes_Meta_Box')) {
                         }
                         //set new id for field in array format
                         $f['id'] = $id;
+                        $meta_box_class = isset($f['label_block']) && $f['label_block'] ? ' ht--meta-box-label-block' : '';
                         if ($field['inline']) {
                             echo '<td>';
                         }
-                        echo '<div class="ht--meta-box-row ht--meta-box-' . $f['type'] . '">';
+                        echo '<div class="ht--meta-box-row ht--meta-box-' . esc_attr($f['type']) . esc_attr($meta_box_class) . '">';
                         call_user_func(array($this, 'show_field_' . $f['type']), $f, $m);
                         echo '</div>';
                         if ($field['inline']) {
@@ -338,14 +345,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
                         echo '</table>';
                     }
 
-                    echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . $field['id'] . '"><span class="dashicons dashicons-dismiss"></span></span>';
+                    echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
                     echo '</div>';
                     echo '</div>';
                     $c = $c + 1;
                 }
             }
 
-            echo '<button class="button" id="add-' . $field['id'] . '">+ Add</button>';
+            echo '<button class="button" id="add-' . esc_attr($field['id']) . '">' . esc_html__('+ Add', 'hashthemes') . '</button>';
             echo '</div>';
 
             //create all fields once more for js function and catch with object buffer
@@ -368,10 +375,11 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $id = '';
                 $id = $field['id'] . '[CurrentCounter][' . $f['id'] . ']';
                 $f['id'] = $id;
+                $meta_box_class = isset($f['label_block']) && $f['label_block'] ? ' ht--meta-box-label-block' : '';
                 if ($field['inline']) {
                     echo '<td>';
                 }
-                echo '<div class="ht--meta-box-row ht--meta-box-' . $f['type'] . '">';
+                echo '<div class="ht--meta-box-row ht--meta-box-' . esc_attr($f['type']) . esc_attr($meta_box_class) . '">';
                 if ($f['type'] != 'wysiwyg')
                     call_user_func(array($this, 'show_field_' . $f['type']), $f, '');
                 else
@@ -386,7 +394,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 echo '</table>';
             }
 
-            echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . $field['id'] . '"><span class="dashicons dashicons-dismiss"></span></span>';
+            echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
             echo '</div>';
             echo '</div>';
 
@@ -418,12 +426,13 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_begin($field, $meta) {
             if ($this->inGroup === true) {
+                $meta_box_class = isset($field['label_block']) && $field['label_block'] ? ' ht--meta-box-label-block' : '';
                 echo "<td>";
-                echo '<div class="ht--meta-box-row ht--meta-box-' . $field['type'] . '">';
+                echo '<div class="ht--meta-box-row ht--meta-box-' . esc_attr($field['type']) . esc_attr($meta_box_class) . '">';
             }
             if ($field['name'] != '' || $field['name'] != FALSE) {
                 echo "<div class='ht--meta-box-label'>";
-                echo "<label for='{$field['id']}'>{$field['name']}</label>";
+                echo "<label for='" . esc_attr($field['id']) . "'>" . esc_attr($field['name']) . "</label>";
                 echo "</div>";
                 echo "<div class='ht--meta-box-field'>";
             }
@@ -438,7 +447,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_end($field, $meta = NULL, $group = false) {
             if (isset($field['desc']) && $field['desc'] != '') {
-                echo "<div class='ht--meta-box-desc'>{$field['desc']}</div>";
+                echo "<div class='ht--meta-box-desc'>" . wp_kses_post($field['desc']) . "</div>";
             }
             echo "</div>";
             if ($this->inGroup === true) {
@@ -456,7 +465,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_text($field, $meta) {
             $this->show_field_begin($field, $meta);
-            echo "<input type='text' class='ht--text" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' value='{$meta}' size='30' " . ( isset($field['style']) ? "style='{$field['style']}'" : '' ) . "/>";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}'" : '';
+            echo "<input type='text' class='ht--text" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' value='{$meta}' size='30' " . wp_strip_all_tags($style) . "/>";
             $this->show_field_end($field, $meta);
         }
 
@@ -472,7 +483,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $step = (isset($field['step']) || $field['step'] != '1') ? "step='" . $field['step'] . "' " : '';
             $min = isset($field['min']) ? "min='" . $field['min'] . "' " : '';
             $max = isset($field['max']) ? "max='" . $field['max'] . "' " : '';
-            echo "<input type='number' class='ht--number" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' value='{$meta}' size='30' " . $step . $min . $max . ( isset($field['style']) ? "style='{$field['style']}'" : '' ) . "/>";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}'" : '';
+            echo "<input type='number' class='ht--number" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' value='{$meta}' size='30' " . $step . $min . $max . wp_strip_all_tags($style) . "/>";
             $this->show_field_end($field, $meta);
         }
 
@@ -484,7 +497,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @access public
          */
         public function show_field_hidden($field, $meta) {
-            echo "<input type='hidden' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . "class='ht--text" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' value='{$meta}'/>";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+            echo "<input type='hidden' " . wp_strip_all_tags($style) . "class='ht--text" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' value='{$meta}'/>";
         }
 
         /**
@@ -494,7 +509,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @access public
          */
         public function show_field_paragraph($field) {
-            echo '<p>' . $field['value'] . '</p>';
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) ? " style='{$field['style']}' " : '';
+            echo '<p class="ht--paragraph' . esc_attr($class) . '"' . wp_strip_all_tags($style) . '>' . $field['value'] . '</p>';
         }
 
         /**
@@ -506,7 +523,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_textarea($field, $meta) {
             $this->show_field_begin($field, $meta);
-            echo "<textarea class='ht--textarea large-text" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " cols='60' rows='10'>{$meta}</textarea>";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+            echo "<textarea class='ht--textarea large-text" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' " . wp_strip_all_tags($style) . " cols='60' rows='10'>{$meta}</textarea>";
             $this->show_field_end($field, $meta);
         }
 
@@ -522,7 +541,10 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $meta = (array) $meta;
 
             $this->show_field_begin($field, $meta);
-            echo "<select " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--select" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}" . ( $field['multiple'] ? "[]' id='{$field['id']}' multiple='multiple'" : "'" ) . ">";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+
+            echo "<select " . wp_strip_all_tags($style) . " class='ht--select" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "" . ( $field['multiple'] ? "[]' id='" . esc_attr($field['id']) . "' multiple='multiple'" : "'" ) . ">";
             foreach ($field['options'] as $key => $value) {
                 echo "<option value='{$key}'" . selected(in_array($key, $meta), true, false) . ">{$value}</option>";
             }
@@ -544,8 +566,10 @@ if (!class_exists('HashThemes_Meta_Box')) {
             global $wp_registered_sidebars;
             $this->show_field_begin($field, $meta);
             if ($wp_registered_sidebars) {
-                echo "<select " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--widget-select" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}" . ( $field['multiple'] ? "[]' id='{$field['id']}' multiple='multiple'" : "'" ) . ">";
-                echo "<option value='none'" . selected(in_array('none', $meta), true, false) . ">" . esc_html__('-- Choose Widget --', 'cehr') . "</option>";
+                $class = isset($field['class']) ? ' ' . $field['class'] : "";
+                $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+                echo "<select " . wp_strip_all_tags($style) . " class='ht--widget-select" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "" . ( $field['multiple'] ? "[]' id='" . esc_attr($field['id']) . "' multiple='multiple'" : "'" ) . ">";
+                echo "<option value='none'" . selected(in_array('none', $meta), true, false) . ">" . esc_html__('-- Choose Widget --', 'hashthemes') . "</option>";
                 foreach ($wp_registered_sidebars as $sidebar) {
                     echo "<option value='{$sidebar['id']}'" . selected(in_array($sidebar['id'], $meta), true, false) . ">{$sidebar['name']}</option>";
                 }
@@ -566,8 +590,11 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $meta = (array) $meta;
 
             $this->show_field_begin($field, $meta);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+
             foreach ($field['options'] as $key => $value) {
-                echo "<input type='radio' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--radio" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' value='{$key}'" . checked(in_array($key, $meta), true, false) . " /> <span class='ht--radio-label'>{$value}</span>";
+                echo "<label><input type='radio' " . wp_strip_all_tags($style) . " class='ht--radio" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' value='{$key}'" . checked(in_array($key, $meta), true, false) . " /> <span class='ht--radio-label'>{$value}</span></label>";
             }
             $this->show_field_end($field, $meta);
         }
@@ -584,10 +611,12 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $meta = (array) $meta;
 
             $this->show_field_begin($field, $meta);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
             foreach ($field['options'] as $key => $value) {
-                echo "<label class='ht--meta-box-image-select" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "'>";
+                echo "<label class='ht--meta-box-image-select" . esc_attr($class) . "'>";
                 echo "<img src='{$value}'>";
-                echo "<input type='radio' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--radio' name='{$field['id']}' value='{$key}'" . checked(in_array($key, $meta), true, false) . " />";
+                echo "<input type='radio' " . wp_strip_all_tags($style) . " class='ht--radio' name='" . esc_attr($field['id']) . "' value='{$key}'" . checked(in_array($key, $meta), true, false) . " />";
                 echo "<span></span>";
                 echo "</label>";
             }
@@ -603,9 +632,11 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_checkbox($field, $meta) {
             $this->show_field_begin($field, $meta);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
             echo "<div class='ht--meta-box-toggle'>";
-            echo "<input type='checkbox' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--meta-box-toggle-checkbox" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}'" . checked(!empty($meta), true, false) . " />";
-            echo "<label class='ht--meta-box-toggle-label' for='{$field['id']}'></label>";
+            echo "<input type='checkbox' " . wp_strip_all_tags($style) . " class='ht--meta-box-toggle-checkbox" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "'" . checked(!empty($meta), true, false) . " />";
+            echo "<label class='ht--meta-box-toggle-label' for='" . esc_attr($field['id']) . "'></label>";
             echo "</div>";
             $this->show_field_end($field, $meta);
         }
@@ -619,12 +650,13 @@ if (!class_exists('HashThemes_Meta_Box')) {
          */
         public function show_field_wysiwyg($field, $meta, $in_repeater = false) {
             $this->show_field_begin($field, $meta);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
 
             if ($in_repeater)
-                echo "<textarea class='ht--wysiwyg theEditor large-text" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' cols='60' rows='10'>{$meta}</textarea>";
+                echo "<textarea class='ht--wysiwyg theEditor large-text" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' cols='60' rows='10'>{$meta}</textarea>";
             else {
                 $settings = ( isset($field['settings']) && is_array($field['settings']) ? $field['settings'] : array() );
-                $settings['editor_class'] = 'ht--wysiwyg' . ( isset($field['class']) ? ' ' . $field['class'] : '' );
+                $settings['editor_class'] = 'ht--wysiwyg' . esc_attr($class);
                 $id = str_replace("_", "", $this->stripNumeric(strtolower($field['id'])));
                 wp_editor(html_entity_decode($meta), $id, $settings);
             }
@@ -636,7 +668,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param array $field 
          * @param array $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_background($field, $meta) {
@@ -663,51 +694,51 @@ if (!class_exists('HashThemes_Meta_Box')) {
             echo '<div class="ht--meta-box-bg-params" ' . $style . '>';
             echo '<div class="ht--meta-box-bg-param-row">';
             echo '<div class="ht--meta-box-bg-param-col">';
-            echo '<label>Background Repeat</label>';
+            echo '<label>' . esc_html__('Background Repeat', 'hashthemes') . '</label>';
             echo "<select class='ht--meta-box-bg-repeat' name='{$name}[repeat]'>";
-            echo '<option value="no-repeat" ' . selected('no-repeat', $value['repeat'], false) . '>No Repeat</option>';
-            echo '<option value="repeat" ' . selected('repeat', $value['repeat'], false) . '>Tile</option>';
-            echo '<option value="repeat-x" ' . selected('repeat-x', $value['repeat'], false) . '>Tile Horizontally</option>';
-            echo '<option value="repeat-y" ' . selected('repeat-y', $value['repeat'], false) . '>Tile Vertically</option>';
+            echo '<option value="no-repeat" ' . selected('no-repeat', $value['repeat'], false) . '>' . esc_html__('No Repeat', 'hashthemes') . '</option>';
+            echo '<option value="repeat" ' . selected('repeat', $value['repeat'], false) . '>' . esc_html__('Tile', 'hashthemes') . '</option>';
+            echo '<option value="repeat-x" ' . selected('repeat-x', $value['repeat'], false) . '>' . esc_html__('Tile Horizontally', 'hashthemes') . '</option>';
+            echo '<option value="repeat-y" ' . selected('repeat-y', $value['repeat'], false) . '>' . esc_html__('Tile Vertically', 'hashthemes') . '</option>';
             echo '</select>';
             echo '</div>';
 
             echo '<div class="ht--meta-box-bg-param-col">';
-            echo '<label>Background Size</label>';
+            echo '<label>' . esc_html__('Background Size', 'hashthemes') . '</label>';
             echo "<select class='ht--meta-box-bg-size' name='{$name}[size]'>";
-            echo '<option value="auto" ' . selected('no-repeat', $value['size'], false) . '>Auto</option>';
-            echo '<option value="cover" ' . selected('repeat', $value['size'], false) . '>Cover</option>';
-            echo '<option value="contain" ' . selected('repeat-x', $value['size'], false) . '>Contain</option>';
+            echo '<option value="auto" ' . selected('no-repeat', $value['size'], false) . '>' . esc_html__('Auto', 'hashthemes') . '</option>';
+            echo '<option value="cover" ' . selected('repeat', $value['size'], false) . '>' . esc_html__('Cover', 'hashthemes') . '</option>';
+            echo '<option value="contain" ' . selected('repeat-x', $value['size'], false) . '>' . esc_html__('Contain', 'hashthemes') . '</option>';
             echo '</select>';
             echo '</div>';
 
             echo '<div class="ht--meta-box-bg-param-col">';
-            echo '<label>Background Position</label>';
+            echo '<label>' . esc_html__('Background Position', 'hashthemes') . '</label>';
             echo "<select class='ht--meta-box-bg-position' name='{$name}[position]'>";
-            echo '<option value="left top" ' . selected('left top', $value['position'], false) . '>Left Top</option>';
-            echo '<option value="left center" ' . selected('left center', $value['position'], false) . '>Left Center</option>';
-            echo '<option value="left bottom" ' . selected('left bottom', $value['position'], false) . '>Left Bottom</option>';
-            echo '<option value="right top" ' . selected('right top', $value['position'], false) . '>Right Top</option>';
-            echo '<option value="right center" ' . selected('right center', $value['position'], false) . '>Right Center</option>';
-            echo '<option value="right bottom" ' . selected('right bottom', $value['position'], false) . '>Right Bottom</option>';
-            echo '<option value="center top" ' . selected('center top', $value['position'], false) . '>Center Top</option>';
-            echo '<option value="center center" ' . selected('center center', $value['position'], false) . '>Center Center</option>';
-            echo '<option value="center bottom" ' . selected('center bottom', $value['position'], false) . '>Center Bottom</option>';
+            echo '<option value="left top" ' . selected('left top', $value['position'], false) . '>' . esc_html__('Left Top', 'hashthemes') . '</option>';
+            echo '<option value="left center" ' . selected('left center', $value['position'], false) . '>' . esc_html__('Left Center', 'hashthemes') . '</option>';
+            echo '<option value="left bottom" ' . selected('left bottom', $value['position'], false) . '>' . esc_html__('Left Bottom', 'hashthemes') . '</option>';
+            echo '<option value="right top" ' . selected('right top', $value['position'], false) . '>' . esc_html__('Right Top', 'hashthemes') . '</option>';
+            echo '<option value="right center" ' . selected('right center', $value['position'], false) . '>' . esc_html__('Right Center', 'hashthemes') . '</option>';
+            echo '<option value="right bottom" ' . selected('right bottom', $value['position'], false) . '>' . esc_html__('Right Bottom', 'hashthemes') . '</option>';
+            echo '<option value="center top" ' . selected('center top', $value['position'], false) . '>' . esc_html__('Center Top', 'hashthemes') . '</option>';
+            echo '<option value="center center" ' . selected('center center', $value['position'], false) . '>' . esc_html__('Center Center', 'hashthemes') . '</option>';
+            echo '<option value="center bottom" ' . selected('center bottom', $value['position'], false) . '>' . esc_html__('Center Bottom', 'hashthemes') . '</option>';
             echo '</select>';
             echo '</div>';
 
             echo '<div class="ht--meta-box-bg-param-col">';
-            echo '<label>Background Attachment</label>';
+            echo '<label>' . esc_html__('Background Attachment', 'hashthemes') . '</label>';
             echo "<select class='ht--meta-box-bg-attachment' name='{$name}[attachment]'>";
-            echo '<option value="fixed" ' . selected('fixed', $value['attachment'], false) . '>Fixed</option>';
-            echo '<option value="scroll" ' . selected('scroll', $value['attachment'], false) . '>Scroll</option>';
+            echo '<option value="fixed" ' . selected('fixed', $value['attachment'], false) . '>' . esc_html__('Fixed', 'hashthemes') . '</option>';
+            echo '<option value="scroll" ' . selected('scroll', $value['attachment'], false) . '>' . esc_html__('Scroll', 'hashthemes') . '</option>';
             echo '</select>';
             echo '</div>';
 
             echo '</div>';
 
             echo '<div class="ht--meta-box-bg-param-overlay">';
-            echo '<label>Overlay Color</label>';
+            echo '<label>' . esc_html__('Overlay Color', 'hashthemes') . '</label>';
             echo "<input data-alpha-enabled='true' class='ht--color-iris ht--meta-alpha-color' type='text' name='{$name}[overlay]' value='{$value['overlay']}' />";
             echo '</div>';
 
@@ -717,9 +748,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
             echo "<input class='ht--meta-box-image-url' type='hidden' name='{$name}[url]' value='{$value['url']}'/>";
 
             if ($has_image) {
-                echo "<input class='button ht--meta-box-remove-image' value='Remove Image' type='button'/>";
+                echo "<input class='button ht--meta-box-remove-image' value='" . esc_html__('Remove Image', 'hashthemes') . "' type='button'/>";
             } else {
-                echo "<input class='button ht--meta-box-upload-image' value='Upload Image' type='button'/>";
+                echo "<input class='button ht--meta-box-upload-image' value='" . esc_html__('Upload Image', 'hashthemes') . "' type='button'/>";
             }
             $this->show_field_end($field, $meta);
         }
@@ -729,7 +760,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param array $field 
          * @param array $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_image($field, $meta) {
@@ -756,10 +786,32 @@ if (!class_exists('HashThemes_Meta_Box')) {
             echo "<input class='ht--meta-box-image-url' type='hidden' name='{$name}[url]' value='{$value['url']}'/>";
 
             if ($has_image) {
-                echo "<input class='button ht--meta-box-remove-image' value='Remove Image' type='button'/>";
+                echo "<input class='button ht--meta-box-remove-image' value='" . esc_html__('Remove Image', 'hashthemes') . "' type='button'/>";
             } else {
-                echo "<input class='button ht--meta-box-upload-image' value='Upload Image' type='button'/>";
+                echo "<input class='button ht--meta-box-upload-image' value='" . esc_html__('Upload Image', 'hashthemes') . "' type='button'/>";
             }
+            $this->show_field_end($field, $meta);
+        }
+
+        /**
+         * Show Gallery Field.
+         *
+         * @param string $field 
+         * @param string $meta 
+         * @access public
+         */
+        public function show_field_gallery($field, $meta) {
+            $this->show_field_begin($field, $meta);
+            echo '<ul class="ht--meta-box-gallery-container">';
+            if ($meta) {
+                $images = explode(',', $meta);
+                foreach ($images as $image) {
+                    $image_src = wp_get_attachment_image_src($image, 'thumbnail');
+                    echo '<li data-id="' . $image . '"><span style="background-image:url(' . $image_src[0] . ')"></span><a href="#" class="ht--meta-box-gallery-remove">×</a></li>';
+                }
+            }
+            echo '</ul>';
+            echo '<input type="hidden" name="' . $field['id'] . '" value="' . $meta . '" /><a href="#" class="button ht--meta-box-gallery-button">' . esc_html__('Add Images', 'hashthemes') . '</a>';
             $this->show_field_end($field, $meta);
         }
 
@@ -768,12 +820,12 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_color($field, $meta) {
             $this->show_field_begin($field, $meta);
-            echo "<input class='ht--color-iris" . (isset($field['class']) ? " {$field['class']}" : "") . "' type='text' name='{$field['id']}' id='{$field['id']}' value='{$meta}' size='8' />";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            echo "<input class='ht--color-iris" . esc_attr($class) . "' type='text' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' value='{$meta}' size='8' />";
 
             $this->show_field_end($field, $meta);
         }
@@ -783,12 +835,12 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_alpha_color($field, $meta) {
             $this->show_field_begin($field, $meta);
-            echo "<input data-alpha-enabled='true' class='ht--color-iris" . (isset($field['class']) ? " {$field['class']}" : "") . "' type='text' name='{$field['id']}' id='{$field['id']}' value='{$meta}' />";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            echo "<input data-alpha-enabled='true' class='ht--color-iris" . esc_attr($class) . "' type='text' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' value='{$meta}' />";
 
             $this->show_field_end($field, $meta);
         }
@@ -798,7 +850,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_checkbox_list($field, $meta) {
@@ -806,11 +857,12 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $meta = (array) $meta;
 
             $this->show_field_begin($field, $meta);
-
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
 
             foreach ($field['options'] as $key => $value) {
                 echo "<div class='ht--meta-box-checkbox-fields'>";
-                echo "<input type='checkbox' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . "  class='ht--checkbox_list" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}[]' value='{$key}'" . checked(in_array($key, $meta), true, false) . " /> {$value}";
+                echo "<label><input type='checkbox' " . wp_strip_all_tags($style) . "  class='ht--checkbox_list" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "[]' value='{$key}'" . checked(in_array($key, $meta), true, false) . " /> {$value}</label>";
                 echo "</div>";
             }
 
@@ -822,12 +874,13 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public
          */
         public function show_field_date($field, $meta) {
             $this->show_field_begin($field, $meta);
-            echo "<input type='text'  " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--date" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' rel='{$field['format']}' value='{$meta}' size='30' />";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+            echo "<input type='text'  " . wp_strip_all_tags($style) . " class='ht--date" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' rel='{$field['format']}' value='{$meta}' size='30' />";
             $this->show_field_end($field, $meta);
         }
 
@@ -836,13 +889,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public 
          */
         public function show_field_time($field, $meta) {
             $this->show_field_begin($field, $meta);
             $ampm = ($field['ampm']) ? 'true' : 'false';
-            echo "<input type='text'  " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--time" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}' id='{$field['id']}' data-ampm='{$ampm}' rel='{$field['format']}' value='{$meta}' size='30' />";
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
+            echo "<input type='text'  " . wp_strip_all_tags($style) . " class='ht--time" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "' id='" . esc_attr($field['id']) . "' data-ampm='{$ampm}' rel='{$field['format']}' value='{$meta}' size='30' />";
             $this->show_field_end($field, $meta);
         }
 
@@ -851,7 +905,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * used creating a posts/pages/custom types checkboxlist or a select dropdown
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public 
          */
         public function show_field_posts($field, $meta) {
@@ -862,19 +915,21 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $this->show_field_begin($field, $meta);
             $options = $field['options'];
             $posts = get_posts($options['args']);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
             // checkbox_list
             if ('checkbox_list' == $options['type']) {
                 foreach ($posts as $p) {
-                    echo "<input type='checkbox' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--posts-checkbox" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}[]' value='$p->ID'" . checked(in_array($p->ID, $meta), true, false) . " /> $p->post_title<br/>";
+                    echo "<input type='checkbox' " . wp_strip_all_tags($style) . " class='ht--posts-checkbox" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "[]' value='$p->ID'" . checked(in_array($p->ID, $meta), true, false) . " /> $p->post_title<br/>";
                 }
             }
             // select
             else {
-                echo "<select " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--posts-select" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}" . ($field['multiple'] ? "[]' multiple='multiple' style='height:auto'" : "'") . ">";
+                echo "<select " . wp_strip_all_tags($style) . " class='ht--posts-select" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "" . ($field['multiple'] ? "[]' multiple='multiple' style='height:auto'" : "'") . ">";
                 if (isset($field['emptylabel']))
                     echo '<option value="-1">' . (isset($field['emptylabel']) ? $field['emptylabel'] : __('Select ...', 'mmb')) . '</option>';
                 foreach ($posts as $p) {
-                    echo "<option value='$p->ID'" . selected(in_array($p->ID, $meta), true, false) . ">$p->post_title</option>";
+                    echo "<option value='" . esc_attr($p->ID) . "'" . selected(in_array($p->ID, $meta), true, false) . ">" . esc_html($p->post_title) . "</option>";
                 }
                 echo "</select>";
             }
@@ -887,7 +942,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * used creating a category/tags/custom taxonomy checkboxlist or a select dropdown
          * @param string $field 
          * @param string $meta 
-         * @since 1.0
          * @access public 
          * 
          * @uses get_terms()
@@ -900,18 +954,20 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $this->show_field_begin($field, $meta);
             $options = $field['options'];
             $terms = get_terms($options['taxonomy'], $options['args']);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
 
             // checkbox_list
             if ('checkbox_list' == $options['type']) {
                 foreach ($terms as $term) {
-                    echo "<input type='checkbox' " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--tax-checkbox" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}[]' value='$term->slug'" . checked(in_array($term->slug, $meta), true, false) . " /> $term->name<br/>";
+                    echo "<input type='checkbox' " . wp_strip_all_tags($style) . " class='ht--tax-checkbox" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "[]' value='$term->slug'" . checked(in_array($term->slug, $meta), true, false) . " /> " . esc_html($term->name) . "<br/>";
                 }
             }
             // select
             else {
-                echo "<select " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--tax-select" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' name='{$field['id']}" . ($field['multiple'] ? "[]' multiple='multiple' style='height:auto'" : "'") . ">";
+                echo "<select " . wp_strip_all_tags($style) . " class='ht--tax-select" . esc_attr($class) . "' name='" . esc_attr($field['id']) . "" . ($field['multiple'] ? "[]' multiple='multiple' style='height:auto'" : "'") . ">";
                 foreach ($terms as $term) {
-                    echo "<option value='$term->slug'" . selected(in_array($term->slug, $meta), true, false) . ">$term->name</option>";
+                    echo "<option value='$term->slug'" . selected(in_array($term->slug, $meta), true, false) . "> " . esc_html($term->name) . "</option>";
                 }
                 echo "</select>";
             }
@@ -924,7 +980,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *
          * @param string $field 
          * @param string $meta 
-         * @since 2.9.9
          * @access public
          */
         public function show_field_cond($field, $meta) {
@@ -935,8 +990,8 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 $checked = true;
             }
             echo '<div class="ht--meta-box-toggle">';
-            echo "<input type='checkbox' class='ht--meta-box-conditional-control ht--meta-box-toggle-checkbox' name='{$field['id']}[enabled]' id='{$field['id']}'" . checked($checked, true, false) . " />";
-            echo "<label class='ht--meta-box-toggle-label' for='{$field['id']}'></label>";
+            echo "<input type='checkbox' class='ht--meta-box-conditional-control ht--meta-box-toggle-checkbox' name='" . esc_attr($field['id']) . "[enabled]' id='" . esc_attr($field['id']) . "'" . checked($checked, true, false) . " />";
+            echo "<label class='ht--meta-box-toggle-label' for='" . esc_attr($field['id']) . "'></label>";
             echo "</div>";
             $this->show_field_end($field, $meta);
             echo '</div>';
@@ -963,7 +1018,8 @@ if (!class_exists('HashThemes_Meta_Box')) {
                     $m = is_array($m) ? array_map('esc_attr', $m) : esc_attr($m);
                 //set new id for field in array format
                 $f['id'] = $id;
-                echo '<div class="ht--meta-box-row ht--meta-box-' . $f['type'] . '">';
+                $meta_box_class = isset($f['label_block']) && $f['label_block'] ? ' ht--meta-box-label-block' : '';
+                echo '<div class="ht--meta-box-row ht--meta-box-' . $f['type'] . $meta_box_class . '">';
                 call_user_func(array($this, 'show_field_' . $f['type']), $f, $m);
                 echo '</div>';
                 if ($field['inline']) {
@@ -989,40 +1045,42 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $position = isset($field['position']) ? $field['position'] : array('left', 'top', 'right', 'bottom');
             $name = esc_attr($field['id']);
             $value = wp_parse_args($meta, $std);
+            $class = isset($field['class']) ? ' ' . $field['class'] : "";
+            $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
 
-            echo "<ul " . ( isset($field['style']) ? "style='{$field['style']}' " : '' ) . " class='ht--dimension" . ( isset($field['class']) ? ' ' . $field['class'] : '' ) . "' id='{$field['id']}'>";
+            echo "<ul " . wp_strip_all_tags($style) . " class='ht--dimension" . esc_attr($class) . "' id='" . esc_attr($field['id']) . "'>";
             if (in_array('left', $position)) {
                 echo '<li class="ht--dimension-wrap">';
                 echo '<input type="number" class="ht--dimension-left" name="' . $name . '[left] " value="' . $value['left'] . '" />';
-                echo '<span class="ht--dimension-label">' . esc_html__('Left', 'cehr') . '</span>';
+                echo '<span class="ht--dimension-label">' . esc_html__('Left', 'hashthemes') . '</span>';
                 echo '</li>';
             }
 
             if (in_array('top', $position)) {
                 echo '<li class="ht--dimension-wrap">';
                 echo '<input type="number" class="ht--dimension-top" name="' . $name . '[top]" value="' . $value['top'] . '" />';
-                echo '<span class="ht--dimension-label">' . esc_html__('Top', 'cehr') . '</span>';
+                echo '<span class="ht--dimension-label">' . esc_html__('Top', 'hashthemes') . '</span>';
                 echo '</li>';
             }
 
             if (in_array('bottom', $position)) {
                 echo '<li class="ht--dimension-wrap">';
                 echo '<input type="number" class="ht--dimension-bottom" name="' . $name . '[bottom]" value="' . $value['bottom'] . '" />';
-                echo '<span class="ht--dimension-label">' . esc_html__('Bottom', 'cehr') . '</span>';
+                echo '<span class="ht--dimension-label">' . esc_html__('Bottom', 'hashthemes') . '</span>';
                 echo '</li>';
             }
 
             if (in_array('right', $position)) {
                 echo '<li class="ht--dimension-wrap">';
                 echo '<input type="number" class="ht--dimension-right" name="' . $name . '[right]" value="' . $value['right'] . '" />';
-                echo '<span class="ht--dimension-label">' . esc_html__('Right', 'cehr') . '</span>';
+                echo '<span class="ht--dimension-label">' . esc_html__('Right', 'hashthemes') . '</span>';
                 echo '</li>';
             }
 
             echo '<li class="ht--dimension-wrap">';
             echo '<div class="ht--link-dimensions">';
-            echo '<span class="dashicons dashicons-admin-links ht--linked" title="' . esc_html__('Link', 'cehr') . '"></span>';
-            echo '<span class="dashicons dashicons-editor-unlink ht--unlinked" title="' . esc_html__('Unlink', 'cehr') . '"></span>';
+            echo '<span class="dashicons dashicons-admin-links ht--linked" title="' . esc_html__('Link', 'hashthemes') . '"></span>';
+            echo '<span class="dashicons dashicons-editor-unlink ht--unlinked" title="' . esc_html__('Unlink', 'hashthemes') . '"></span>';
             echo '</div>';
             echo '</li>';
             echo '</ul>';
@@ -1033,7 +1091,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * Save Data from Metabox
          *
          * @param string $post_id 
-         * @since 1.0
          * @access public 
          */
         public function save($post_id) {
@@ -1081,7 +1138,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string $old 
          * @param string|mixed $new 
-         * @since 1.0
          * @access public
          */
         public function save_field($post_id, $field, $old, $new) {
@@ -1105,7 +1161,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string $old 
          * @param string|mixed $new 
-         * @since 1.7
          * @access public
          */
         public function save_field_image($post_id, $field, $old, $new) {
@@ -1124,7 +1179,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string $old 
          * @param string|mixed $new 
-         * @since 1.7
          * @access public
          */
         public function save_field_background($post_id, $field, $old, $new) {
@@ -1143,7 +1197,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string $old 
          * @param string $new 
-         * @since 1.0
          * @access public 
          */
 
@@ -1160,7 +1213,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string|mixed $old 
          * @param string|mixed $new 
-         * @since 1.0
          * @access public 
          */
         public function save_field_repeater($post_id, $field, $old, $new) {
@@ -1197,7 +1249,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @param string $field 
          * @param string $old 
          * @param string $new 
-         * @since 1.0
          * @access public
          * @deprecated 3.0.7
          */
@@ -1208,22 +1259,33 @@ if (!class_exists('HashThemes_Meta_Box')) {
         /**
          * Add missed values for meta box.
          *
-         * @since 1.0
          * @access public
          */
         public function add_missed_values() {
 
             // Default values for meta box
-            $this->_meta_box = array_merge(array('context' => 'normal', 'priority' => 'high', 'pages' => array('post')), (array) $this->_meta_box);
+            $this->_meta_box = array_merge(array(
+                'context' => 'normal',
+                'priority' => 'high',
+                'pages' => array('post')
+                    ), (array) $this->_meta_box
+            );
 
             // Default values for fields
             foreach ($this->_fields as &$field) {
 
-                $multiple = in_array($field['type'], array('checkbox_list', 'file', 'image'));
+                $multiple = in_array($field['type'], array('checkbox_list', 'image'));
                 $std = $multiple ? array() : '';
                 $format = 'date' == $field['type'] ? 'yy-mm-dd' : ( 'time' == $field['type'] ? 'hh:mm' : '' );
 
-                $field = array_merge(array('multiple' => $multiple, 'std' => $std, 'desc' => '', 'format' => $format, 'validate_func' => ''), $field);
+                $field = array_merge(array(
+                    'multiple' => $multiple,
+                    'std' => $std,
+                    'desc' => '',
+                    'format' => $format,
+                    'validate_func' => ''
+                        ), $field
+                );
             } // End foreach
         }
 
@@ -1231,7 +1293,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * Check if field with $type exists.
          *
          * @param string $type 
-         * @since 1.0
          * @access public
          */
         public function has_field($type) {
@@ -1260,7 +1321,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
         /**
          * Check if current page is edit page.
          *
-         * @since 1.0
          * @access public
          */
         public function is_edit_page() {
@@ -1269,35 +1329,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
         }
 
         /**
-         * Fixes the odd indexing of multiple file uploads.
-         *
-         * Goes from the format: 
-         * $_FILES['field']['key']['index']
-         * to
-         * The More standard and appropriate:
-         * $_FILES['field']['index']['key']
-         *
-         * @param string $files 
-         * @since 1.0
-         * @access public
-         */
-        public function fix_file_array(&$files) {
-
-            $output = array();
-
-            foreach ($files as $key => $list) {
-                foreach ($list as $index => $value) {
-                    $output[$index][$key] = $value;
-                }
-            }
-
-            return $output;
-        }
-
-        /**
          *  Add Field to meta box (generic function)
-         *  @author Ohad Raz
-         *  @since 1.2
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1310,47 +1342,36 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Text Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
          *    'name' => // field name/label string optional
-         *    'desc' => // field description, string optional
-         *    'std' => // default value, string optional
-         *    'style' =>   // custom style for field, string optional
-         *    'validate_func' => // validate function, string optional
-         *   @param $repeater bool  is this a field inside a repeatr? true|false(default) 
+         *    'icon' => // icon class only - default is dashicons-admin-generic dashicons
          */
         public function openTab($id, $args) {
-            $new_field = array('type' => 'tabopen', 'id' => $id, 'active' => '', 'name' => 'Title');
+            $new_field = array(
+                'type' => 'tabopen',
+                'id' => $id,
+                'name' => esc_html__('Title', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             $this->_fields[] = $new_field;
         }
 
         /**
          *  Add Text Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
-         *  @param $args mixed|array
-         *    'name' => // field name/label string optional
-         *    'desc' => // field description, string optional
-         *    'std' => // default value, string optional
-         *    'style' =>   // custom style for field, string optional
-         *    'validate_func' => // validate function, string optional
-         *   @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function closeTab() {
-            $new_field = array('type' => 'tabclose');
+            $new_field = array(
+                'type' => 'tabclose'
+            );
             $this->_fields[] = $new_field;
         }
 
         /**
          *  Add Text Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1362,7 +1383,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *   @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addText($id, $args, $repeater = false) {
-            $new_field = array('type' => 'text', 'id' => $id, 'std' => '', 'desc' => '', 'style' => '', 'name' => 'Text Field');
+            $new_field = array(
+                'type' => 'text',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Text Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1373,8 +1401,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Number Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1386,7 +1412,16 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *   @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addNumber($id, $args, $repeater = false) {
-            $new_field = array('type' => 'number', 'id' => $id, 'std' => '0', 'desc' => '', 'style' => '', 'name' => 'Number Field', 'step' => '1', 'min' => '0');
+            $new_field = array(
+                'type' => 'number',
+                'id' => $id,
+                'std' => '0',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Number Field', 'hashthemes'),
+                'step' => '1',
+                'min' => '0'
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1397,8 +1432,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Hidden Field to meta box
-         *  @author Ohad Raz
-         *  @since 0.1.3
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1410,7 +1443,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *   @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addHidden($id, $args, $repeater = false) {
-            $new_field = array('type' => 'hidden', 'id' => $id, 'std' => '', 'desc' => '', 'style' => '', 'name' => 'Text Field');
+            $new_field = array(
+                'type' => 'hidden',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Hidden Field', 'hashthemes'),
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1421,15 +1461,17 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Paragraph to meta box
-         *  @author Ohad Raz
-         *  @since 0.1.3
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $value  paragraph html
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addParagraph($id, $args, $repeater = false) {
-            $new_field = array('type' => 'paragraph', 'id' => $id, 'value' => '');
+            $new_field = array(
+                'type' => 'paragraph',
+                'id' => $id,
+                'value' => ''
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1440,8 +1482,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Checkbox Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1452,7 +1492,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addCheckbox($id, $args, $repeater = false) {
-            $new_field = array('type' => 'checkbox', 'id' => $id, 'std' => '', 'desc' => '', 'style' => '', 'name' => 'Checkbox Field');
+            $new_field = array(
+                'type' => 'checkbox',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Checkbox Field', 'hashthemes'),
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1463,8 +1510,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add CheckboxList Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $options (array)  array of key => value pairs for select options
@@ -1479,7 +1524,16 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *   which means the last param as false to get the values in an array
          */
         public function addCheckboxList($id, $options, $args, $repeater = false) {
-            $new_field = array('type' => 'checkbox_list', 'id' => $id, 'std' => '', 'desc' => '', 'style' => '', 'name' => 'Checkbox List Field', 'options' => $options, 'multiple' => true,);
+            $new_field = array(
+                'type' => 'checkbox_list',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Checkbox List Field', 'hashthemes'),
+                'options' => $options,
+                'multiple' => true
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1490,8 +1544,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Textarea Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1503,7 +1555,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addTextarea($id, $args, $repeater = false) {
-            $new_field = array('type' => 'textarea', 'id' => $id, 'std' => '', 'desc' => '', 'style' => '', 'name' => 'Textarea Field');
+            $new_field = array(
+                'type' => 'textarea',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Textarea Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1514,8 +1573,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Select Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string field id, i.e. the meta key
          *  @param $options (array)  array of key => value pairs for select options  
@@ -1528,7 +1585,16 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addSelect($id, $options, $args, $repeater = false) {
-            $new_field = array('type' => 'select', 'id' => $id, 'std' => array(), 'desc' => '', 'style' => '', 'name' => 'Select Field', 'multiple' => false, 'options' => $options);
+            $new_field = array(
+                'type' => 'select',
+                'id' => $id,
+                'std' => array(),
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Select Field', 'hashthemes'),
+                'multiple' => false,
+                'options' => $options
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1539,8 +1605,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Select Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string field id, i.e. the meta key
          *  @param $options (array)  array of key => value pairs for select options  
@@ -1553,7 +1617,15 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addWidgetList($id, $args, $repeater = false) {
-            $new_field = array('type' => 'widget_list', 'id' => $id, 'std' => array(), 'desc' => '', 'style' => '', 'name' => 'Select Widget', 'multiple' => false);
+            $new_field = array(
+                'type' => 'widget_list',
+                'id' => $id,
+                'std' => array(),
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Select Widget', 'hashthemes'),
+                'multiple' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1564,8 +1636,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Radio Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string field id, i.e. the meta key
          *  @param $options (array)  array of key => value pairs for radio options
@@ -1577,7 +1647,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default)
          */
         public function addRadio($id, $options, $args, $repeater = false) {
-            $new_field = array('type' => 'radio', 'id' => $id, 'std' => array(), 'desc' => '', 'name' => 'Radio Field', 'options' => $options);
+            $new_field = array(
+                'type' => 'radio',
+                'id' => $id,
+                'std' => array(),
+                'desc' => '',
+                'name' => esc_html__('Radio Field', 'hashthemes'),
+                'options' => $options
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1588,8 +1665,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Image Radio Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string field id, i.e. the meta key
          *  @param $options (array)  array of key => value pairs for radio options
@@ -1601,7 +1676,15 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default)
          */
         public function addImageRadio($id, $options, $args, $repeater = false) {
-            $new_field = array('type' => 'image_radio', 'id' => $id, 'std' => array(), 'desc' => '', 'style' => '', 'name' => 'Radio Field', 'options' => $options);
+            $new_field = array(
+                'type' => 'image_radio',
+                'id' => $id,
+                'std' => array(),
+                'desc' => '',
+                'style' => '',
+                'name' => esc_html__('Radio Field', 'hashthemes'),
+                'options' => $options
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1612,8 +1695,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Date Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1625,7 +1706,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addDate($id, $args, $repeater = false) {
-            $new_field = array('type' => 'date', 'id' => $id, 'std' => '', 'desc' => '', 'format' => 'd MM, yy', 'name' => 'Date Field');
+            $new_field = array(
+                'type' => 'date',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'format' => 'd MM, yy',
+                'name' => esc_html__('Date Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1636,8 +1724,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Time Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string- field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1649,7 +1735,15 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addTime($id, $args, $repeater = false) {
-            $new_field = array('type' => 'time', 'id' => $id, 'std' => '', 'desc' => '', 'format' => 'hh:mm', 'name' => 'Time Field', 'ampm' => false);
+            $new_field = array(
+                'type' => 'time',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'format' => 'hh:mm',
+                'name' => esc_html__('Time Field', 'hashthemes'),
+                'ampm' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1660,8 +1754,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Color Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1672,7 +1764,13 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addColor($id, $args, $repeater = false) {
-            $new_field = array('type' => 'color', 'id' => $id, 'std' => '', 'desc' => '', 'name' => 'ColorPicker Field');
+            $new_field = array(
+                'type' => 'color',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'name' => esc_html__('ColorPicker Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1683,8 +1781,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Alpha Color Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1695,7 +1791,13 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addAplhaColor($id, $args, $repeater = false) {
-            $new_field = array('type' => 'alpha_color', 'id' => $id, 'std' => '', 'desc' => '', 'name' => 'ColorPicker Field');
+            $new_field = array(
+                'type' => 'alpha_color',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'name' => esc_html__('ColorPicker Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1706,8 +1808,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Image Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1717,7 +1817,40 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addImage($id, $args, $repeater = false) {
-            $new_field = array('type' => 'image', 'id' => $id, 'desc' => '', 'name' => 'Image Field', 'std' => array('id' => '', 'url' => ''), 'multiple' => false);
+            $new_field = array(
+                'type' => 'image',
+                'id' => $id,
+                'desc' => '',
+                'name' => esc_html__('Image Field', 'hashthemes'),
+                'std' => array('id' => '', 'url' => ''),
+                'multiple' => false
+            );
+            $new_field = array_merge($new_field, $args);
+            if (false === $repeater) {
+                $this->_fields[] = $new_field;
+            } else {
+                return $new_field;
+            }
+        }
+
+        /**
+         *  Add Gallery Field to meta box
+         *  @access public
+         *  @param $id string  field id, i.e. the meta key
+         *  @param $args mixed|array
+         *    'name' => // field name/label string optional
+         *    'desc' => // field description, string optional
+         *    'validate_func' => // validate function, string optional
+         *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
+         */
+        public function addGallery($id, $args, $repeater = false) {
+            $new_field = array(
+                'type' => 'gallery',
+                'id' => $id, 'desc' => '',
+                'name' => esc_html__('Gallery Field', 'hashthemes'),
+                'std' => '',
+                'multiple' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1728,8 +1861,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Background Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1739,7 +1870,22 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addBackground($id, $args, $repeater = false) {
-            $new_field = array('type' => 'background', 'id' => $id, 'desc' => '', 'name' => 'Background Field', 'std' => array('id' => '', 'url' => '', 'repeat' => 'no-repeat', 'size' => 'auto', 'position' => 'center center', 'attachment' => 'scroll', 'color' => '', 'overlay' => ''), 'multiple' => false);
+            $new_field = array(
+                'type' => 'background',
+                'id' => $id, 'desc' => '',
+                'name' => esc_html__('Background Field', 'hashthemes'),
+                'std' => array(
+                    'id' => '',
+                    'url' => '',
+                    'repeat' => 'no-repeat',
+                    'size' => 'auto',
+                    'position' => 'center center',
+                    'attachment' => 'scroll',
+                    'color' => '',
+                    'overlay' => ''
+                ),
+                'multiple' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1750,8 +1896,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Background Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1761,7 +1905,15 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default) 
          */
         public function addDimension($id, $args, $repeater = false) {
-            $new_field = array('type' => 'dimension', 'id' => $id, 'desc' => '', 'name' => 'Dimenstion', 'position' => array('top', 'bottom', 'left', 'right'), 'std' => array('top' => '', 'bottom' => '', 'left' => '', 'right' => ''), 'multiple' => false);
+            $new_field = array(
+                'type' => 'dimension',
+                'id' => $id,
+                'desc' => '',
+                'name' => esc_html__('Dimenstion', 'hashthemes'),
+                'position' => array('top', 'bottom', 'left', 'right'),
+                'std' => array('top' => '', 'bottom' => '', 'left' => '', 'right' => ''),
+                'multiple' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1772,8 +1924,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add WYSIWYG Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1785,7 +1935,14 @@ if (!class_exists('HashThemes_Meta_Box')) {
          *  @param $repeater bool  is this a field inside a repeatr? true|false(default)
          */
         public function addWysiwyg($id, $args, $repeater = false) {
-            $new_field = array('type' => 'wysiwyg', 'id' => $id, 'std' => '', 'desc' => '', 'style' => 'width: 300px; height: 400px', 'name' => 'WYSIWYG Editor Field');
+            $new_field = array(
+                'type' => 'wysiwyg',
+                'id' => $id,
+                'std' => '',
+                'desc' => '',
+                'style' => 'width: 300px; height: 400px',
+                'name' => esc_html__('WYSIWYG Editor Field', 'hashthemes')
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1796,8 +1953,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Taxonomy Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $options mixed|array options of taxonomy field
@@ -1815,9 +1970,16 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $temp = array(
                 'args' => array('hide_empty' => 0),
                 'tax' => 'category',
-                'type' => 'select');
+                'type' => 'select'
+            );
             $options = array_merge($temp, $options);
-            $new_field = array('type' => 'taxonomy', 'id' => $id, 'desc' => '', 'name' => 'Taxonomy Field', 'options' => $options);
+            $new_field = array(
+                'type' => 'taxonomy',
+                'id' => $id,
+                'desc' => '',
+                'name' => esc_html__('Taxonomy Field', 'hashthemes'),
+                'options' => $options
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1828,8 +1990,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add posts Field to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $options mixed|array options of taxonomy field
@@ -1846,11 +2006,27 @@ if (!class_exists('HashThemes_Meta_Box')) {
         public function addPosts($id, $options, $args, $repeater = false) {
             $post_type = isset($options['post_type']) ? $options['post_type'] : (isset($args['post_type']) ? $args['post_type'] : 'post');
             $type = isset($options['type']) ? $options['type'] : 'select';
-            $q = array('posts_per_page' => -1, 'post_type' => $post_type);
-            if (isset($options['args']))
+            $q = array(
+                'posts_per_page' => -1,
+                'post_type' => $post_type
+            );
+            if (isset($options['args'])) {
                 $q = array_merge($q, (array) $options['args']);
-            $options = array('post_type' => $post_type, 'type' => $type, 'args' => $q);
-            $new_field = array('type' => 'posts', 'id' => $id, 'desc' => '', 'std' => '', 'name' => 'Posts Field', 'options' => $options, 'multiple' => false);
+            }
+            $options = array(
+                'post_type' => $post_type,
+                'type' => $type,
+                'args' => $q
+            );
+            $new_field = array(
+                'type' => 'posts',
+                'id' => $id,
+                'desc' => '',
+                'std' => '',
+                'name' => esc_html__('Posts Field', 'hashthemes'),
+                'options' => $options,
+                'multiple' => false
+            );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
                 $this->_fields[] = $new_field;
@@ -1861,8 +2037,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add repeater Field Block to meta box
-         *  @author Ohad Raz
-         *  @since 1.0
          *  @access public
          *  @param $id string  field id, i.e. the meta key
          *  @param $args mixed|array
@@ -1877,7 +2051,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
             $new_field = array(
                 'type' => 'repeater',
                 'id' => $id,
-                'name' => 'Reapeater Field',
+                'name' => esc_html__('Reapeater Field', 'hashthemes'),
                 'fields' => array(),
                 'inline' => false,
                 'sortable' => false
@@ -1888,8 +2062,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          *  Add Checkbox conditional Field to Page
-         *  @author Ohad Raz
-         *  @since 2.9.9
          *  @access public
          *  @param $id string  field id, i.e. the key
          *  @param $args mixed|array
@@ -1907,7 +2079,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 'std' => '',
                 'desc' => '',
                 'style' => '',
-                'name' => 'Conditional Field',
+                'name' => esc_html__('Conditional Field', 'hashthemes'),
                 'fields' => array()
             );
             $new_field = array_merge($new_field, $args);
@@ -1920,8 +2092,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          * Finish Declaration of Meta Box
-         * @author Ohad Raz
-         * @since 1.0
          * @access public
          */
         public function Finish() {
@@ -1930,8 +2100,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
 
         /**
          * Helper function to check for empty arrays
-         * @author Ohad Raz
-         * @since 1.5
          * @access public
          * @param $args mixed|array
          */
@@ -1956,8 +2124,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
         /**
          * stripNumeric Strip number form string
          *
-         * @author Ohad Raz <admin@bainternet.info>
-         * @since 3.0.7
          * @access public
          * @param  string $str
          * @return string number less string

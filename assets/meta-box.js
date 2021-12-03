@@ -8,10 +8,10 @@
 var $ = jQuery.noConflict();
 
 function update_repeater_fields() {
-    cehr_metabox_fields.updateRepeater();
+    hashthemes_metabox_fields.updateRepeater();
 }
 //metabox fields object
-var cehr_metabox_fields = {
+var hashthemes_metabox_fields = {
     oncefancySelect: false,
     updateRepeater: function () {
         this.load_time_picker();
@@ -109,7 +109,7 @@ var cehr_metabox_fields = {
                 var attachment = frame.state().get('selection').first().toJSON();
 
                 // Send the attachment URL to our custom image input field.
-                imgContainer.html('<img src="' + attachment.url + '" style="max-width:100%;"/>');
+                imgContainer.html('<img src="' + attachment.url + '"/>');
                 imgIdInput.val(attachment.id);
                 imgUrlInput.val(attachment.url);
                 bgPrams.show();
@@ -141,7 +141,7 @@ var cehr_metabox_fields = {
     }
 };
 //call object init in delay
-window.setTimeout('cehr_metabox_fields.init();', 2000);
+window.setTimeout('hashthemes_metabox_fields.init();', 2000);
 
 jQuery(document).ready(function ($) {
     // repater Field
@@ -160,6 +160,87 @@ jQuery(document).ready(function ($) {
         opacity: 0.8,
         cursor: 'move',
         handle: '.ht--re-sort-handle'
+    });
+
+    /*
+     * Sortable images
+     */
+    $('ul.ht--meta-box-gallery-container').sortable({
+        items: 'li',
+        cursor: '-webkit-grabbing', /* mouse cursor */
+        stop: function (event, ui) {
+            ui.item.removeAttr('style');
+            var sort = new Array(), /* array of image IDs */
+                    gallery = $(this); /* ul.ht--meta-box-gallery-container */
+            /* each time after dragging we resort our array */
+            gallery.find('li').each(function (index) {
+                sort.push($(this).attr('data-id'));
+            });
+            /* add the array value to the hidden input field */
+            gallery.next().val(sort.join());
+        }
+    });
+
+    /*
+     * Multiple images uploader
+     */
+    $('.ht--meta-box-gallery-button').click(function (e) {
+        e.preventDefault();
+        var button = $(this);
+        var hiddenfield = button.prev();
+        if (hiddenfield.val()) {
+            hiddenfieldvalue = hiddenfield.val().split(",");
+        } else {
+            hiddenfieldvalue = new Array();
+        }
+        var frame = wp.media({
+            title: 'Insert Images',
+            library: {
+                type: 'image',
+                post__not_in: hiddenfieldvalue
+            },
+            button: {text: 'Use Images'},
+            multiple: 'add'
+        });
+        frame.on('select', function () {
+            var attachments = frame.state().get('selection').map(function (a) {
+                a.toJSON();
+                return a;
+            });
+            var i;
+            /* loop through all the images */
+            for (i = 0; i < attachments.length; ++i) {
+                /* add HTML element with an image */
+                $('ul.ht--meta-box-gallery-container').append('<li data-id="' + attachments[i].id + '"><span style="background-image:url(' + attachments[i].attributes.url + ')"></span><a href="#" class="ht--meta-box-gallery-remove">×</a></li>');
+                /* add an image ID to the array of all images */
+                hiddenfieldvalue.push(attachments[i].id);
+            }
+            /* refresh sortable */
+            $("ul.ht--meta-box-gallery-container").sortable("refresh");
+            /* add the IDs to the hidden field value */
+            hiddenfield.val(hiddenfieldvalue.join());
+        }).open();
+    });
+
+    /*
+     * Remove certain images
+     */
+    $('body').on('click', '.ht--meta-box-gallery-remove', function () {
+        var id = $(this).parent().attr('data-id'),
+                gallery = $(this).parent().parent(),
+                hiddenfield = gallery.next(),
+                hiddenfieldvalue = hiddenfield.val().split(","),
+                i = hiddenfieldvalue.indexOf(id);
+        $(this).parent().remove();
+        /* remove certain array element */
+        if (i != -1) {
+            hiddenfieldvalue.splice(i, 1);
+        }
+        /* add the IDs to the hidden field value */
+        hiddenfield.val(hiddenfieldvalue.join());
+        /* refresh sortable */
+        gallery.sortable("refresh");
+        return false;
     });
 
     // Linked button
