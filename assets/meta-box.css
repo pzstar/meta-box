@@ -79,16 +79,19 @@
     display: block;
     width: 100%;
     margin-bottom: 10px;
+    padding: 0;
 }
 
 .ht--meta-box-panel > .ht--meta-box-row,
-.ht--meta-box-conditional-container > .ht--meta-box-row{
+.ht--meta-box-conditional-container > .ht--meta-box-row,
+.ht--meta-box-repeater-table > .ht--meta-box-row{
     border-bottom: 1px solid #EEE;
     padding-bottom: 20px;
 }
 
 .ht--meta-box-panel > .ht--meta-box-row:last-child,
-.ht--meta-box-conditional-container > .ht--meta-box-row:last-child{
+.ht--meta-box-conditional-container > .ht--meta-box-row:last-child,
+.ht--meta-box-repeater-table > .ht--meta-box-row:last-child{
     border-bottom: 0;
     padding-bottom: 0;
 }
@@ -322,7 +325,6 @@
 
 /* Conditional */
 .ht--meta-box-conditional-container{
-    margin-top: -21px;
     border: 1px solid #EEE;
     padding: 20px;
     margin-bottom: 20px;
@@ -337,6 +339,7 @@
 
 .ht--meta-box-form-table td{
     vertical-align: top;
+    padding: 0 20px 0 0;
 }
 
 

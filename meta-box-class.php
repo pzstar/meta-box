@@ -314,8 +314,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
                     echo '<span class="ht--re-control ht--re-toggle"><span class="dashicons dashicons-arrow-down"></span></span>';
                     echo '</h6>';
                     echo '<div class="ht--meta-box-repeater-table">';
+                    echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
                     if ($field['inline']) {
-                        echo '<table>';
+                        echo '<table class="ht--meta-box-form-table">';
                         echo '<tr VALIGN="top">';
                     }
                     foreach ($field['fields'] as $f) {
@@ -345,7 +346,6 @@ if (!class_exists('HashThemes_Meta_Box')) {
                         echo '</table>';
                     }
 
-                    echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
                     echo '</div>';
                     echo '</div>';
                     $c = $c + 1;
@@ -366,8 +366,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
             echo '<span class="ht--re-control ht--re-toggle"><span class="dashicons dashicons-arrow-down"></span></span>';
             echo '</h6>';
             echo '<div class="ht--meta-box-repeater-table">';
+            echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
             if ($field['inline']) {
-                echo '<table>';
+                echo '<table class="ht--meta-box-form-table">';
                 echo '<tr VALIGN="top">';
             }
             foreach ($field['fields'] as $f) {
@@ -393,8 +394,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 echo '</tr>';
                 echo '</table>';
             }
-
-            echo '<span class="ht--re-control ht--re-remove" id="ht--remove-' . esc_attr($field['id']) . '"><span class="dashicons dashicons-dismiss"></span></span>';
+            
             echo '</div>';
             echo '</div>';
 
@@ -586,9 +586,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
          * @access public 
          */
         public function show_field_radio($field, $meta) {
+
             if (!is_array($meta))
                 $meta = (array) $meta;
-
             $this->show_field_begin($field, $meta);
             $class = isset($field['class']) ? ' ' . $field['class'] : "";
             $style = isset($field['style']) && !empty(trim($field['style'])) ? "style='{$field['style']}' " : '';
@@ -1532,7 +1532,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 'style' => '',
                 'name' => esc_html__('Checkbox List Field', 'hashthemes'),
                 'options' => $options,
-                'multiple' => true
+                'multiple' => false
             );
             $new_field = array_merge($new_field, $args);
             if (false === $repeater) {
@@ -1872,7 +1872,8 @@ if (!class_exists('HashThemes_Meta_Box')) {
         public function addBackground($id, $args, $repeater = false) {
             $new_field = array(
                 'type' => 'background',
-                'id' => $id, 'desc' => '',
+                'id' => $id,
+                'desc' => '',
                 'name' => esc_html__('Background Field', 'hashthemes'),
                 'std' => array(
                     'id' => '',
@@ -2079,6 +2080,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 'std' => '',
                 'desc' => '',
                 'style' => '',
+                'inline' => false,
                 'name' => esc_html__('Conditional Field', 'hashthemes'),
                 'fields' => array()
             );

@@ -48,12 +48,20 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
             //text field
             $meta->addText('hashthemes_text_field_id', array(
                 'name' => esc_html__('My Text', 'hashthemes'),
-                'label_block' => true
+                'label_block' => true,
             ));
             //textarea field
             $meta->addTextarea('hashthemes_textarea_field_id', array(
                 'name' => esc_html__('My Textarea', 'hashthemes'),
                 'label_block' => true
+            ));
+            //number field
+            $meta->addNumber('hashthemes_number_field_id', array(
+                'name' => esc_html__('My Number', 'hashthemes'),
+                'label_block' => true,
+                'step' => 2,
+                'min' => 2,
+                'max' => 10
             ));
             //paragraph field
             $meta->addParagraph('hashthemes_paragraph_field_id', array(
@@ -68,7 +76,8 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
             ));
             //checkbox field
             $meta->addCheckbox('hashthemes_checkbox_field_id', array(
-                'name' => esc_html__('My Checkbox', 'hashthemes')
+                'name' => esc_html__('My Checkbox', 'hashthemes'),
+                'std' => true
             ));
             //select field
             $meta->addSelect('hashthemes_select_field_id', array(
@@ -83,13 +92,55 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
                 'radiokey1' => esc_html__('Radio Value1', 'hashthemes'),
                 'radiokey2' => esc_html__('Radio Value2', 'hashthemes')
                     ), array(
-                'name' => esc_html__('My Radio Filed', 'hashthemes'),
+                'name' => esc_html__('My Radio Field', 'hashthemes'),
+                'std' => array('radiokey1')
+            ));
+            //imageradio field
+            $meta->addImageRadio('hashthemes_image_radio_field_id', array(
+                'radiokey1' => get_template_directory_uri() . '/images/post-page/layout1.png',
+                'radiokey2' => get_template_directory_uri() . '/images/post-page/layout2.png'
+                    ), array(
+                'name' => esc_html__('My Image Radio Field', 'hashthemes'),
                 'std' => array('radiokey1')
             ));
             //Image field
             $meta->addImage('hashthemes_image_field_id', array(
-                'name' => esc_html__('My Image', 'hashthemes'),
-                'multiple' => true
+                'name' => esc_html__('My Image', 'hashthemes')
+            ));
+
+            $meta->closeTab();
+
+            $meta->openTab('hashthemes_conditional_setting', array(
+                'name' => esc_html__('Conditional Settings', 'hashthemes'),
+                'icon' => 'dashicons-admin-generic dashicons'
+            ));
+
+            /*
+             * To Create a conditinal Block first create an array of fields
+             * use the same functions as above but add true as a last param (like the repater block)
+             */
+            $Conditinal_fields[] = $meta->addText('hashthemes_cond_text_field_id', array(
+                'name' => esc_html__('My Text', 'hashthemes')
+                    ), true);
+            $Conditinal_fields[] = $meta->addTextarea('hashthemes_cond_textarea_field_id', array(
+                'name' => esc_html__('My Textarea', 'hashthemes')
+                    ), true);
+            $Conditinal_fields[] = $meta->addCheckbox('hashthemes_cond_checkbox_field_id', array(
+                'name' => esc_html__('My Checkbox', 'hashthemes')
+                    ), true);
+            $Conditinal_fields[] = $meta->addColor('hashthemes_cond_color_field_id', array(
+                'name' => esc_html__('My color', 'hashthemes')
+                    ), true);
+
+            /*
+             * Then just add the fields to the repeater block
+             */
+            //repeater block
+            $meta->addCondition('hashthemes_conditinal_fields', array(
+                'name' => __('Enable conditinal fields? ', 'hashthemes'),
+                'desc' => __('<small>Turn ON if you want to enable the <strong>conditinal fields</strong>.</small>', 'hashthemes'),
+                'fields' => $Conditinal_fields,
+                'inline' => false,
             ));
 
             $meta->closeTab();
@@ -132,7 +183,7 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
                 'checkboxkey2' => esc_html__('Checkbox Value 2', 'hashthemes')
                     ), array(
                 'name' => esc_html__('My checkbox List', 'hashthemes'),
-                'std' => array('checkboxkey2'),
+                'std' => array('checkboxkey1'),
             ));
             //date field
             $meta2->addDate('hashthemes_date_field_id', array(
@@ -144,11 +195,21 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
             ));
             //Color field
             $meta2->addColor('hashthemes_color_field_id', array(
-                'name' => esc_html__('My Color', 'hashthemes')
+                'name' => esc_html__('My Color', 'hashthemes'),
+                'std' => '#FF0000'
+            ));
+            //Alpha Color field
+            $meta2->addAplhaColor('hashthemes_alpha_color_field_id', array(
+                'name' => esc_html__('My Aplha Color', 'hashthemes'),
+                'std' => 'rgba(0,0,0,0.5)'
             ));
             //wysiwyg field
             $meta2->addWysiwyg('hashthemes_wysiwyg_field_id', array(
                 'name' => esc_html__('My wysiwyg Editor', 'hashthemes')
+            ));
+            //widget field
+            $meta2->addWidgetList('hashthemes_widget_field_id', array(
+                'name' => esc_html__('Widget List', 'hashthemes')
             ));
             //taxonomy field
             $meta2->addTaxonomy('hashthemes_taxonomy_field_id', array(
@@ -163,9 +224,18 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
                 'name' => esc_html__('My Posts', 'hashthemes')
             ));
 
-            $meta2->addGallery('hashthemes_gallery_images', array(
+            $meta2->addGallery('hashthemes_gallery_field_id', array(
                 'name' => esc_html__('Post Gallery Images', 'hashthemes'),
                 'desc' => esc_html__('Drag to Reorder the position', 'hashthemes')
+            ));
+
+            $meta2->addBackground('hashthemes_background_field_id', array(
+                'name' => esc_html__('Background', 'hashthemes')
+            ));
+
+            $meta2->addDimension('hashthemes_dimension_field_id', array(
+                'name' => esc_html__('Padding', 'hashthemes'),
+                'position' => array('top', 'bottom', 'left', 'right'),
             ));
 
             /*
@@ -176,16 +246,13 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
                 'name' => esc_html__('My Text', 'hashthemes'),
                 'label_block' => true
                     ), true);
-            $repeater_fields[] = $meta2->addTextarea('hashthemes_re_textarea_field_id', array(
-                'name' => esc_html__('My Textarea', 'hashthemes'),
-                'label_block' => true
-                    ), true);
             $repeater_fields[] = $meta2->addCheckbox('hashthemes_re_checkbox_field_id', array(
                 'name' => esc_html__('My Checkbox', 'hashthemes'),
                 'label_block' => true
                     ), true);
             $repeater_fields[] = $meta2->addImage('hashthemes_image_field_id', array(
-                'name' => esc_html__('My Image', 'hashthemes')
+                'name' => esc_html__('My Image', 'hashthemes'),
+                'label_block' => true
                     ), true);
             /*
              * Then just add the fields to the repeater block
@@ -223,7 +290,7 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
                 'name' => __('Enable conditinal fields? ', 'hashthemes'),
                 'desc' => __('<small>Turn ON if you want to enable the <strong>conditinal fields</strong>.</small>', 'hashthemes'),
                 'fields' => $Conditinal_fields,
-                'std' => false
+                'inline' => false,
             ));
 
             /*
@@ -250,33 +317,33 @@ if (!class_exists('HashThemes_Meta_Box_Config')) {
             $meta3 = new HashThemes_Meta_Box($config3);
             //first field of the group has 'group' => 'start' and last field has 'group' => 'end'
             //text field
-            $meta3->addText('hashthemes_text_field_id', array(
+            $meta3->addText('hashthemes_group_text_field_id', array(
                 'name' => esc_html__('My Text', 'hashthemes'),
+                'label_block' => true,
                 'group' => 'start'
             ));
-            //textarea field
-            $meta3->addTextarea('hashthemes_textarea_field_id', array(
-                'name' => esc_html__('My Textarea', 'hashthemes')
-            ));
             //checkbox field
-            $meta3->addCheckbox('hashthemes_checkbox_field_id', array(
-                'name' => esc_html__('My Checkbox', 'hashthemes')
+            $meta3->addCheckbox('hashthemes_group_checkbox_field_id', array(
+                'name' => esc_html__('My Checkbox', 'hashthemes'),
+                'label_block' => true,
             ));
             //select field
-            $meta3->addSelect('hashthemes_select_field_id', array(
+            $meta3->addSelect('hashthemes_group_select_field_id', array(
                 'selectkey1' => esc_html__('Select Value1', 'hashthemes'),
                 'selectkey2' => esc_html__('Select Value2', 'hashthemes')
                     ), array(
                 'name' => esc_html__('My select', 'hashthemes'),
-                'std' => array('selectkey2')
+                'std' => array('selectkey2'),
+                'label_block' => true,
             ));
             //radio field
-            $meta3->addRadio('hashthemes_radio_field_id', array(
+            $meta3->addRadio('hashthemes_group_radio_field_id', array(
                 'radiokey1' => esc_html__('Radio Value1', 'hashthemes'),
                 'radiokey2' => esc_html__('Radio Value2', 'hashthemes')
                     ), array(
-                'name' => esc_html__('My Radio Filed', 'hashthemes'),
-                'std' => array('radionkey2'),
+                'name' => esc_html__('My Radio Field', 'hashthemes'),
+                'std' => array('radiokey2'),
+                'label_block' => true,
                 'group' => 'end'
             ));
 
