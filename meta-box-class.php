@@ -394,7 +394,7 @@ if (!class_exists('HashThemes_Meta_Box')) {
                 echo '</tr>';
                 echo '</table>';
             }
-            
+
             echo '</div>';
             echo '</div>';
 
@@ -706,9 +706,9 @@ if (!class_exists('HashThemes_Meta_Box')) {
             echo '<div class="ht--meta-box-bg-param-col">';
             echo '<label>' . esc_html__('Background Size', 'hashthemes') . '</label>';
             echo "<select class='ht--meta-box-bg-size' name='{$name}[size]'>";
-            echo '<option value="auto" ' . selected('no-repeat', $value['size'], false) . '>' . esc_html__('Auto', 'hashthemes') . '</option>';
-            echo '<option value="cover" ' . selected('repeat', $value['size'], false) . '>' . esc_html__('Cover', 'hashthemes') . '</option>';
-            echo '<option value="contain" ' . selected('repeat-x', $value['size'], false) . '>' . esc_html__('Contain', 'hashthemes') . '</option>';
+            echo '<option value="auto" ' . selected('auto', $value['size'], false) . '>' . esc_html__('Auto', 'hashthemes') . '</option>';
+            echo '<option value="cover" ' . selected('cover', $value['size'], false) . '>' . esc_html__('Cover', 'hashthemes') . '</option>';
+            echo '<option value="contain" ' . selected('contain', $value['size'], false) . '>' . esc_html__('Contain', 'hashthemes') . '</option>';
             echo '</select>';
             echo '</div>';
 
